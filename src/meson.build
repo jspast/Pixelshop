@@ -11,6 +11,7 @@ pixelshop_sources = [
   'main.c',
   'pixelshop-application.c',
   'pixelshop-window.c',
+  'pixelshop-image.c',
 ]
 
 pixelshop_deps = [
