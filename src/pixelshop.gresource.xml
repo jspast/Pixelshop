@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/jspast/Pixelshop">
+    <file preprocess="xml-stripblanks">pixelshop-window.ui</file>
+    <file preprocess="xml-stripblanks">gtk/help-overlay.ui</file>
+    <file>main.css</file>
+  </gresource>
+  <gresource prefix="/io/github/jspast/Pixelshop/icons/scalable/actions">
+    <file alias="pixelshop-image-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/image-alt-symbolic.svg</file>
+    <file alias="pixelshop-edit-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/magic-wand-symbolic.svg</file>
+    <file alias="pixelshop-grayscale-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/blend-tool-symbolic.svg</file>
+    <file alias="pixelshop-mirror-horizontal-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/arrow-pointing-at-line-right-symbolic.svg</file>
+    <file alias="pixelshop-mirror-vertical-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/arrow-pointing-at-line-up-symbolic.svg</file>
+    <file alias="pixelshop-color-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/color-symbolic.svg</file>
+  </gresource>
+</gresources>

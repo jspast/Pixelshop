@@ -1,0 +1,233 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PixelshopWindow: Adw.ApplicationWindow {
+  title: _('Pixelshop');
+  default-width: 800;
+  default-height: 600;
+
+  Adw.Breakpoint {
+    condition ("max-width: 600sp")
+
+    setters {
+     hmirror_button_label.visible: false;
+     vmirror_button_label.visible: false;
+     grayscale_button_label.visible: false;
+     quantization_box_label.visible: false;
+     pictures_box.orientation: vertical;
+    }
+  }
+
+  content: Adw.ToolbarView toolbar_view {
+    reveal-bottom-bars: bind edit_button.active;
+    top-bar-style: flat;
+    bottom-bar-style: raised_border;
+
+    [top]
+    Adw.HeaderBar {
+
+      Revealer edit_button_revealer {
+        reveal-child: false;
+
+        [start]
+        Box {
+          hexpand: true;
+          spacing: 12;
+
+          ToggleButton edit_button {
+            tooltip-text: bind edit_button_label.label;
+            active: false;
+            hexpand: true;
+
+            Box {
+              halign: center;
+              hexpand: true;
+              spacing: 12;
+
+              Image {
+                icon-name: "pixelshop-edit-symbolic";
+              }
+
+              Label edit_button_label {
+                label: _('Edit');
+                ellipsize: end;
+              }
+            }
+          }
+        }
+      }
+
+      [end]
+      MenuButton {
+        primary: true;
+        icon-name: 'open-menu-symbolic-symbolic';
+        tooltip-text: _('Main Menu');
+        menu-model: primary_menu;
+      }
+    }
+
+    Stack stack {
+
+      Adw.StatusPage status_page {
+        icon-name: "io.github.jspast.Pixelshop-symbolic";
+        title: _('Edit Pictures');
+        description: _('Drag and drop an image file here');
+
+        Button {
+          halign: center;
+          label: _('Open an image...');
+          styles ["pill", "suggested-action"]
+          action-name: "win.open";
+        }
+      }
+
+      Box pictures_box {
+        orientation: horizontal;
+        hexpand: true;
+        vexpand: true;
+        css-classes: ["image-background"];
+
+        Picture original_picture {
+          hexpand: true;
+          vexpand: true;
+        }
+
+        Separator {
+          orientation: vertical;
+          width-request: 2;
+        }
+
+        Picture edited_picture {
+          hexpand: true;
+          vexpand: true;
+        }
+      }
+    }
+
+    [bottom]
+    ActionBar {
+
+      Box {
+        hexpand: true;
+        spacing: 12;
+
+        Button hmirror_button {
+          tooltip-text: bind hmirror_button_label.label;
+          action-name: "win.mirror-horizontally";
+          hexpand: true;
+
+          Box {
+            halign: center;
+            hexpand: true;
+            spacing: 12;
+
+            Image {
+              icon-name: "pixelshop-mirror-horizontal-symbolic";
+            }
+
+            Label hmirror_button_label {
+              label: _('Mirror Horizontally');
+              ellipsize: end;
+            }
+          }
+        }
+
+        Button vmirror_button {
+          tooltip-text: bind vmirror_button_label.label;
+          action-name: "win.mirror-vertically";
+          hexpand: true;
+
+          Box {
+            halign: center;
+            hexpand: true;
+            spacing: 12;
+
+            Image {
+              icon-name: "pixelshop-mirror-vertical-symbolic";
+            }
+
+            Label vmirror_button_label {
+              label: _('Mirror Vertically');
+              ellipsize: end;
+            }
+          }
+        }
+
+        ToggleButton grayscale_button {
+          tooltip-text: bind grayscale_button_label.label;
+          active: false;
+          hexpand: true;
+
+          Box {
+            halign: center;
+            hexpand: true;
+            spacing: 12;
+
+            Image {
+              icon-name: "pixelshop-grayscale-symbolic";
+            }
+
+            Label grayscale_button_label {
+              label: _('Grayscale');
+              ellipsize: end;
+            }
+          }
+        }
+
+        Box quantization_box {
+          tooltip-text: bind quantization_box_label.label;
+          halign: center;
+          hexpand: true;
+          spacing: 12;
+          sensitive: bind grayscale_button.active;
+
+          Image {
+            icon-name: "pixelshop-color-symbolic";
+          }
+
+          Label quantization_box_label {
+            label: _('Colors');
+            ellipsize: end;
+          }
+
+          SpinButton quantization_button {
+            numeric: true;
+            adjustment: Adjustment {
+              lower: 1;
+              upper: 256;
+              step-increment: 1;
+              value: 256;
+            };
+          }
+        }
+      }
+    }
+  };
+}
+
+menu primary_menu {
+
+  section {
+    item {
+      label: _('Open');
+      action: "win.open";
+    }
+
+    item {
+      label: _('Save as...');
+      action: "win.save-as";
+    }
+  }
+
+  section {
+    item {
+      label: _('_Keyboard Shortcuts');
+      action: 'win.show-help-overlay';
+    }
+
+    item {
+      label: _('_About Pixelshop');
+      action: 'app.about';
+    }
+  }
+}

@@ -1,0 +1,10 @@
+[Desktop Entry]
+Name=Pixelshop
+Exec=pixelshop
+Icon=io.github.jspast.Pixelshop
+Terminal=false
+Type=Application
+Categories=Utility;
+Keywords=GTK;
+StartupNotify=true
+DBusActivatable=true

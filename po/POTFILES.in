@@ -1,0 +1,8 @@
+# List of source files containing translatable strings.
+# Please keep this file sorted alphabetically.
+data/io.github.jspast.Pixelshop.desktop.in
+data/io.github.jspast.Pixelshop.metainfo.xml.in
+data/io.github.jspast.Pixelshop.gschema.xml
+src/main.c
+src/pixelshop-window.c
+src/pixelshop-window.blp
