@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Pixelshop
-Exec=pixelshop
+Exec=pixelshop %f
 Icon=io.github.jspast.Pixelshop
 Terminal=false
 Type=Application
@@ -8,3 +8,4 @@ Categories=Utility;
 Keywords=GTK;
 StartupNotify=true
 DBusActivatable=true
+MimeType=image/jpeg;image/png;

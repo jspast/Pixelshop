@@ -2,11 +2,6 @@
 
 #include "pixelshop-window.h"
 
-// #define STB_IMAGE_IMPLEMENTATION
-// #include "include/stb_image.h"
-// #define STB_IMAGE_WRITE_IMPLEMENTATION
-// #include "include/stb_image_write.h"
-
 #include <adwaita.h>
 
 G_BEGIN_DECLS
@@ -16,7 +11,7 @@ G_BEGIN_DECLS
 G_DECLARE_FINAL_TYPE (PixelshopImage, pixelshop_image, PIXELSHOP, IMAGE, GObject)
 
 void
-pixelshop_image_load_image (GFile *file, PixelshopImage *self);
+pixelshop_image_load_image (guint8 *contents, int length, PixelshopImage *self);
 
 GdkTexture*
 pixelshop_image_get_original_texture (PixelshopImage *self);

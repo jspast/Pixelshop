@@ -110,19 +110,56 @@ stack_transition (PixelshopWindow *self)
 }
 
 static void
-open_file (PixelshopWindow *self,
-           GFile *file)
+open_file_complete (GObject          *source_object,
+                    GAsyncResult     *result,
+                    PixelshopWindow  *self)
 {
+  GFile *file = G_FILE (source_object);
+
+  g_autofree char *contents = NULL;
+  gsize length = 0;
+
+  g_autoptr (GError) error = NULL;
+
+  // Complete the asynchronous operation; this function will either
+  // give you the contents of the file as a byte array, or will
+  // set the error argument
+  g_file_load_contents_finish (file,
+                               result,
+                               &contents,
+                               &length,
+                               NULL,
+                               &error);
+
+  // In case of error, print a warning to the standard error output
+  if (error != NULL)
+    {
+      g_printerr ("Unable to open “%s”: %s\n",
+                  g_file_peek_path (file),
+                  error->message);
+      return;
+    }
+
   if (!self->image_opened)
     stack_transition(self);
 
   reset_buttons(self);
   pixelshop_image_reset_edits(self->image);
 
-  pixelshop_image_load_image (file, self->image);
+  pixelshop_image_load_image ((guint8*) contents, length, self->image);
 
   draw_original_picture(self);
   draw_edited_picture(self);
+ }
+
+static void
+open_file (PixelshopWindow *self,
+           GFile *file)
+{
+  g_file_load_contents_async (file,
+                              NULL,
+                              (GAsyncReadyCallback) open_file_complete,
+                              self);
 }
 
 static void
@@ -145,6 +182,10 @@ static void
 pixelshop_window_open_file_dialog (GAction *action, GVariant *parameter, PixelshopWindow *self)
 {
   g_autoptr (GtkFileDialog) dialog = gtk_file_dialog_new ();
+  g_autoptr (GtkFileFilter) filter = gtk_file_filter_new ();
+  gtk_file_filter_add_mime_type (filter, "image/jpeg");
+  gtk_file_filter_add_mime_type (filter, "image/png");
+  gtk_file_dialog_set_default_filter(dialog, filter);
 
   gtk_file_dialog_open (dialog,
                         GTK_WINDOW (self),
@@ -160,17 +201,12 @@ on_drop (GtkDropTarget *target,
          double y,
          gpointer data)
 {
-  /* GdkFileList is a boxed value so we use the boxed API. */
-  GdkFileList *file_list = g_value_get_boxed (value);
-
-  GSList *list = gdk_file_list_get_files (file_list);
-
-  GFile* file = list->data;
-
   PixelshopWindow *self = data;
 
-  if (file != NULL)
-    open_file (self, file);
+  if (G_VALUE_HOLDS (value, G_TYPE_FILE))
+    open_file (self, g_value_get_object (value));
+  else
+    return FALSE;
 
   return TRUE;
 }
@@ -197,7 +233,7 @@ pixelshop_window_init (PixelshopWindow *self)
 
   // Drag and Drop:
   GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);
-  gtk_drop_target_set_gtypes (target, (GType[1]) { GDK_TYPE_FILE_LIST, }, 1);
+  gtk_drop_target_set_gtypes (target, (GType[1]) { G_TYPE_FILE, }, 1);
   g_signal_connect (target, "drop", G_CALLBACK (on_drop), self);
   gtk_widget_add_controller (GTK_WIDGET (self->stack), GTK_EVENT_CONTROLLER (target));
 

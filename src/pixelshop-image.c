@@ -1,8 +1,17 @@
+#define STB_IMAGE_IMPLEMENTATION
+#include "include/stb_image.h"
+#define STB_IMAGE_WRITE_IMPLEMENTATION
+#include "include/stb_image_write.h"
+
 #include "pixelshop-image.h"
 
 #define GRAYSCALE_R 0.299
 #define GRAYSCALE_G 0.587
 #define GRAYSCALE_B 0.144
+
+#define DESIRED_CHANNELS 3
+
+#define MEMORY_FORMAT GDK_MEMORY_R8G8B8
 
 struct _PixelshopImage
 {
@@ -16,11 +25,11 @@ struct _PixelshopImage
   guint8 max_color;
 
   GdkTexture *original_texture;
-
-  GByteArray *edited_buffer;
-  gsize height;
-  gsize width;
+  guint8 *edited_buffer;
+  int height;
+  int width;
   gsize stride;
+  gsize length;
 };
 
 G_DEFINE_FINAL_TYPE (PixelshopImage, pixelshop_image, G_TYPE_OBJECT)
@@ -35,15 +44,15 @@ mirror_horizontally (PixelshopImage *self)
 
   for (gsize i = 0; i < self->height; i++) {
     line_offset = i * self->stride;
-    line_end_offset = line_offset + self->stride - 3;
+    line_end_offset = line_offset + self->stride - DESIRED_CHANNELS;
 
     for (gsize j = 0; j < self->stride / 6; j++) {
       pixel_offset = j * 3;
 
       for (gsize k = 0; k < 3; k++) {
-        pixel_buffer = self->edited_buffer->data[line_offset + pixel_offset + k];
-        self->edited_buffer->data[line_offset + pixel_offset + k] = self->edited_buffer->data[line_end_offset - pixel_offset + k];
-        self->edited_buffer->data[line_end_offset - pixel_offset + k] = pixel_buffer;
+        pixel_buffer = self->edited_buffer[line_offset + pixel_offset + k];
+        self->edited_buffer[line_offset + pixel_offset + k] = self->edited_buffer[line_end_offset - pixel_offset + k];
+        self->edited_buffer[line_end_offset - pixel_offset + k] = pixel_buffer;
       }
     }
   }
@@ -54,13 +63,13 @@ mirror_vertically (PixelshopImage *self)
 {
   guint8 line_buffer[self->stride];
   gsize line_offset;
-  gsize last_line_offset = self->edited_buffer->len - self->stride;
+  gsize last_line_offset = self->length - self->stride;
 
   for (gsize i = 0; i < self->height / 2; i++) {
     line_offset = i * self->stride;
-    memcpy(line_buffer, &self->edited_buffer->data[line_offset], self->stride);
-    memcpy(&self->edited_buffer->data[line_offset], &self->edited_buffer->data[last_line_offset - line_offset], self->stride);
-    memcpy(&self->edited_buffer->data[last_line_offset - line_offset], line_buffer, self->stride);
+    memcpy(line_buffer, &self->edited_buffer[line_offset], self->stride);
+    memcpy(&self->edited_buffer[line_offset], &self->edited_buffer[last_line_offset - line_offset], self->stride);
+    memcpy(&self->edited_buffer[last_line_offset - line_offset], line_buffer, self->stride);
   }
 }
 
@@ -85,7 +94,7 @@ check_colors (PixelshopImage *self)
 
     for (gsize j = 0; j < self->stride; j += 3) {
 
-      colors[self->edited_buffer->data[line_offset + j]] = true;
+      colors[self->edited_buffer[line_offset + j]] = true;
     }
   }
 
@@ -153,31 +162,41 @@ apply_quantization (PixelshopImage *self)
 
       for (gsize j = 0; j < self->stride; j += 3) {
 
-        self->edited_buffer->data[line_offset + j] = map[self->edited_buffer->data[line_offset + j]];
-        self->edited_buffer->data[line_offset + j + 1] = map[self->edited_buffer->data[line_offset + j + 1]];
-        self->edited_buffer->data[line_offset + j + 2] = map[self->edited_buffer->data[line_offset + j + 2]];
+        self->edited_buffer[line_offset + j] = map[self->edited_buffer[line_offset + j]];
+        self->edited_buffer[line_offset + j + 1] = map[self->edited_buffer[line_offset + j + 1]];
+        self->edited_buffer[line_offset + j + 2] = map[self->edited_buffer[line_offset + j + 2]];
       }
     }
   }
 }
 
 static void
-update_edited_picture_from_original (PixelshopImage *self)
+reset_edited_picture (PixelshopImage *self)
 {
   GdkTextureDownloader *texture_downloader = gdk_texture_downloader_new (self->original_texture);
-  gdk_texture_downloader_set_format(texture_downloader, GDK_MEMORY_R8G8B8);
-  GBytes *tmp_buffer = gdk_texture_downloader_download_bytes(texture_downloader, &self->stride);
-  self->edited_buffer = g_bytes_unref_to_array(tmp_buffer);
+
+  gdk_texture_downloader_set_format (texture_downloader, MEMORY_FORMAT);
+
+  gdk_texture_downloader_download_into (texture_downloader, self->edited_buffer, self->stride);
 }
 
 void
-pixelshop_image_load_image (GFile *file, PixelshopImage *self)
+pixelshop_image_load_image (guint8 *contents, int length, PixelshopImage *self)
 {
-  self->original_texture = gdk_texture_new_from_file (file, NULL);
-  self->height = gdk_texture_get_height(self->original_texture);
-  self->width = gdk_texture_get_width(self->original_texture);
+  int n;
 
-  update_edited_picture_from_original (self);
+  guint8 *buffer = stbi_load_from_memory(contents, length, &self->width, &self->height, &n, DESIRED_CHANNELS);
+
+  self->stride = self->width * DESIRED_CHANNELS;
+  self->length = self->stride * self->height;
+
+  self->edited_buffer = g_malloc(self->length);
+
+  GBytes *bytes = g_bytes_new(buffer, self->length);
+
+  self->original_texture = gdk_memory_texture_new (self->width, self->height, MEMORY_FORMAT, bytes, self->stride);
+
+  reset_edited_picture (self);
 
   check_colors (self);
 }
@@ -191,9 +210,9 @@ pixelshop_image_get_original_texture (PixelshopImage *self)
 GdkTexture*
 pixelshop_image_get_edited_texture (PixelshopImage *self)
 {
-  GBytes *tmp_bytes = g_bytes_new_take(self->edited_buffer->data, self->edited_buffer->len);
+  GBytes *bytes = g_bytes_new(self->edited_buffer, self->length);
 
-  GdkTexture *edited_texture = gdk_memory_texture_new(self->width, self->height, GDK_MEMORY_R8G8B8, tmp_bytes, self->stride);
+  GdkTexture *edited_texture = gdk_memory_texture_new (self->width, self->height, MEMORY_FORMAT, bytes, self->stride);
 
   return edited_texture;
 }
@@ -220,15 +239,15 @@ apply_grayscale (PixelshopImage *self)
 
     for (gsize j = 0; j < self->stride; j += 3) {
 
-      red = self->edited_buffer->data[line_offset + j] * GRAYSCALE_R;
-      green = self->edited_buffer->data[line_offset + j + 1] * GRAYSCALE_G;
-      blue = self->edited_buffer->data[line_offset + j + 2] * GRAYSCALE_B;
+      red = self->edited_buffer[line_offset + j] * GRAYSCALE_R;
+      green = self->edited_buffer[line_offset + j + 1] * GRAYSCALE_G;
+      blue = self->edited_buffer[line_offset + j + 2] * GRAYSCALE_B;
 
       lum = MIN(red + green + blue, 255);
 
-      self->edited_buffer->data[line_offset + j] = lum;
-      self->edited_buffer->data[line_offset + j + 1] = lum;
-      self->edited_buffer->data[line_offset + j + 2] = lum;
+      self->edited_buffer[line_offset + j] = lum;
+      self->edited_buffer[line_offset + j + 1] = lum;
+      self->edited_buffer[line_offset + j + 2] = lum;
     }
   }
 
@@ -238,7 +257,7 @@ apply_grayscale (PixelshopImage *self)
 static void
 revert_grayscale (PixelshopImage *self)
 {
-  update_edited_picture_from_original (self);
+  reset_edited_picture (self);
   apply_mirror(self);
 }
 
@@ -278,23 +297,23 @@ pixelshop_image_set_quantization_colors (int colors, PixelshopImage *self)
   apply_grayscale (self);
 }
 
-gsize
-pixelshop_image_get_width (PixelshopImage *self)
-{
-  return self->width;
-}
+/* gsize */
+/* pixelshop_image_get_width (PixelshopImage *self) */
+/* { */
+/*   return self->width; */
+/* } */
 
-gsize
-pixelshop_image_get_height (PixelshopImage *self)
-{
-  return self->height;
-}
+/* gsize */
+/* pixelshop_image_get_height (PixelshopImage *self) */
+/* { */
+/*   return self->height; */
+/* } */
 
-GByteArray*
-pixelshop_image_get_edited_buffer (PixelshopImage *self)
-{
-  return self->edited_buffer;
-}
+/* GByteArray* */
+/* pixelshop_image_get_edited_buffer (PixelshopImage *self) */
+/* { */
+/*   return self->edited_buffer; */
+/* } */
 
 static void
 pixelshop_image_class_init (PixelshopImageClass *klass)
