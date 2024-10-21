@@ -46,4 +46,13 @@ pixelshop_image_toggle_grayscale (PixelshopImage *self);
 void
 pixelshop_image_set_quantization_colors (int colors, PixelshopImage *self);
 
+typedef struct {
+  int capacity;
+  int last_pos;
+  void *context;
+} pixelshop_image_file_buffer;
+
+pixelshop_image_file_buffer
+pixelshop_image_export_as_jpg (PixelshopImage *self);
+
 G_END_DECLS

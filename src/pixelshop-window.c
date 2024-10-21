@@ -212,6 +212,90 @@ on_drop (GtkDropTarget *target,
 }
 
 static void
+save_file_complete (GObject      *source_object,
+                    GAsyncResult *result,
+                    gpointer      user_data)
+{
+  GFile *file = G_FILE (source_object);
+
+  g_autoptr (GError) error =  NULL;
+  g_file_replace_contents_finish (file, result, NULL, &error);
+
+  // Query the display name for the file
+  g_autofree char *display_name = NULL;
+  g_autoptr (GFileInfo) info =
+  g_file_query_info (file,
+                     "standard::display-name",
+                     G_FILE_QUERY_INFO_NONE,
+                     NULL,
+                     NULL);
+  if (info != NULL)
+    {
+      display_name =
+        g_strdup (g_file_info_get_attribute_string (info, "standard::display-name"));
+    }
+  else
+    {
+      display_name = g_file_get_basename (file);
+    }
+
+  if (error != NULL)
+    {
+      g_printerr ("Unable to save “%s”: %s\n",
+                  display_name,
+                  error->message);
+    }
+}
+
+static void
+save_file (PixelshopWindow *self,
+            GFile          *file)
+{
+  pixelshop_image_file_buffer context = pixelshop_image_export_as_jpg(self->image);
+
+  g_file_replace_contents_async (
+    file,
+    context.context,
+    context.last_pos,
+    NULL,
+    FALSE,
+    G_FILE_CREATE_NONE,
+    NULL,
+    save_file_complete,
+    self);
+}
+
+static void
+on_save_response (GObject      *source,
+                  GAsyncResult *result,
+                  gpointer      user_data)
+{
+  GtkFileDialog *dialog = GTK_FILE_DIALOG (source);
+  PixelshopWindow *self = user_data;
+
+  g_autoptr (GFile) file =
+    gtk_file_dialog_save_finish (dialog, result, NULL);
+
+  if (file != NULL)
+    save_file (self, file);
+}
+
+static void
+pixelshop_window_save_file_dialog (GAction          *action G_GNUC_UNUSED,
+                                      GVariant         *param G_GNUC_UNUSED,
+                                      PixelshopWindow *self)
+{
+  g_autoptr (GtkFileDialog) dialog =
+    gtk_file_dialog_new ();
+
+  gtk_file_dialog_save (dialog,
+                        GTK_WINDOW (self),
+                        NULL,
+                        on_save_response,
+                        self);
+}
+
+static void
 pixelshop_window_init (PixelshopWindow *self)
 {
   gtk_widget_init_template (GTK_WIDGET (self));
@@ -230,6 +314,11 @@ pixelshop_window_init (PixelshopWindow *self)
   g_autoptr (GSimpleAction) open_action = g_simple_action_new ("open", NULL);
   g_signal_connect (open_action, "activate", G_CALLBACK (pixelshop_window_open_file_dialog), self);
   g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (open_action));
+
+  // Save Button:
+  g_autoptr (GSimpleAction) save_action = g_simple_action_new ("save-as", NULL);
+  g_signal_connect (save_action, "activate", G_CALLBACK (pixelshop_window_save_file_dialog), self);
+  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (save_action));
 
   // Drag and Drop:
   GtkDropTarget *target = gtk_drop_target_new (G_TYPE_INVALID, GDK_ACTION_COPY);

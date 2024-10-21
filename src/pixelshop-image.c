@@ -13,6 +13,9 @@
 
 #define MEMORY_FORMAT GDK_MEMORY_R8G8B8
 
+#define DEFAULT_FILE_BUFFER_CAPACITY 1000000
+#define FILE_BUFFER_CAPACITY_INCREMENT 1000000
+
 struct _PixelshopImage
 {
   GObject parent_instance;
@@ -297,23 +300,35 @@ pixelshop_image_set_quantization_colors (int colors, PixelshopImage *self)
   apply_grayscale (self);
 }
 
-/* gsize */
-/* pixelshop_image_get_width (PixelshopImage *self) */
-/* { */
-/*   return self->width; */
-/* } */
+static void custom_stbi_write_mem(void *buf, void *data, int size)
+{
+  pixelshop_image_file_buffer *c = (pixelshop_image_file_buffer*)buf;
+  char *dst = (char *)c->context;
+  char *src = (char *)data;
+  int cur_pos = c->last_pos;
 
-/* gsize */
-/* pixelshop_image_get_height (PixelshopImage *self) */
-/* { */
-/*   return self->height; */
-/* } */
+  if (c->capacity < c->last_pos + size){
+    c->capacity += FILE_BUFFER_CAPACITY_INCREMENT;
+    c->context = realloc(c->context, c->capacity);
+  }
 
-/* GByteArray* */
-/* pixelshop_image_get_edited_buffer (PixelshopImage *self) */
-/* { */
-/*   return self->edited_buffer; */
-/* } */
+  for (int i = 0; i < size; i++) {
+    dst[cur_pos++] = src[i];
+  }
+  c->last_pos = cur_pos;
+}
+
+pixelshop_image_file_buffer
+pixelshop_image_export_as_jpg (PixelshopImage *self)
+{
+  pixelshop_image_file_buffer file_buffer;
+  file_buffer.capacity = DEFAULT_FILE_BUFFER_CAPACITY;
+  file_buffer.last_pos = 0;
+  file_buffer.context = malloc(file_buffer.capacity);
+  stbi_write_jpg_to_func(custom_stbi_write_mem, &file_buffer, self->width, self->height, DESIRED_CHANNELS, self->edited_buffer, 100);
+
+  return file_buffer;
+}
 
 static void
 pixelshop_image_class_init (PixelshopImageClass *klass)
