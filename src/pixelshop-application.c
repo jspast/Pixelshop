@@ -1,5 +1,8 @@
 #include "config.h"
+
+#ifdef __unix__
 #include <glib/gi18n.h>
+#endif
 
 #include "pixelshop-application.h"
 #include "pixelshop-window.h"
@@ -64,10 +67,9 @@ pixelshop_application_about_action (GSimpleAction *action,
 	                       "application-name", "Pixelshop",
 	                       "application-icon", "io.github.jspast.Pixelshop",
 	                       "developer-name", "João S. Pastorello",
-	                       "translator-credits", _("translator-credits"),
 	                       "version", "0.1.0",
-                           "issue-url", "https://github.com/jspast/Pixelshop/issues",
-                           "website", "https://github.com/jspast/Pixelshop",
+                         "issue-url", "https://github.com/jspast/Pixelshop/issues",
+                         "website", "https://github.com/jspast/Pixelshop",
 	                       NULL);
 }
 

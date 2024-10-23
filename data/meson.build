@@ -1,3 +1,12 @@
+if host_machine.system() == 'windows'
+  desktop_file = configure_file(
+    input: 'io.github.jspast.Pixelshop.desktop.in',
+    output: 'io.github.jspast.Pixelshop.desktop',
+    configuration: config_h,
+    install: true,
+    install_dir: get_option('datadir') / 'applications'
+  )
+else
 desktop_file = i18n.merge_file(
         input: 'io.github.jspast.Pixelshop.desktop.in',
        output: 'io.github.jspast.Pixelshop.desktop',
@@ -6,12 +15,22 @@ desktop_file = i18n.merge_file(
       install: true,
   install_dir: get_option('datadir') / 'applications'
 )
+endif
 
 desktop_utils = find_program('desktop-file-validate', required: false)
 if desktop_utils.found()
   test('Validate desktop file', desktop_utils, args: [desktop_file])
 endif
 
+if host_machine.system() == 'windows'
+  appstream_file = configure_file(
+    input: 'io.github.jspast.Pixelshop.metainfo.xml.in',
+    output: 'io.github.jspast.Pixelshop.metainfo.xml',
+    configuration: config_h,
+    install: true,
+    install_dir: get_option('datadir') / 'metainfo',
+  )
+else
 appstream_file = i18n.merge_file(
         input: 'io.github.jspast.Pixelshop.metainfo.xml.in',
        output: 'io.github.jspast.Pixelshop.metainfo.xml',
@@ -19,6 +38,7 @@ appstream_file = i18n.merge_file(
       install: true,
   install_dir: get_option('datadir') / 'metainfo'
 )
+endif
 
 appstreamcli = find_program('appstreamcli', required: false, disabler: true)
 test('Validate appstream file', appstreamcli,
