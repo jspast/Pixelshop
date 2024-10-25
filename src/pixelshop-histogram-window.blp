@@ -1,0 +1,14 @@
+using Gtk 4.0;
+using Adw 1;
+
+template $PixelshopHistogramWindow: Adw.Window {
+  title: _('Histogram');
+  default-width: 750;
+  default-height: 500;
+
+  content: Adw.ToolbarView toolbar_view {
+
+    [top]
+    Adw.HeaderBar {}
+  };
+}

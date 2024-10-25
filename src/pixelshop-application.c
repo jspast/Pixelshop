@@ -105,11 +105,9 @@ pixelshop_application_init (PixelshopApplication *self)
                                          "win.open",
                                          (const char *[]) { "<Ctrl>o", NULL });
 
-   gtk_application_set_accels_for_action (GTK_APPLICATION (self),
+  gtk_application_set_accels_for_action (GTK_APPLICATION (self),
                                          "win.save-as",
-                                         (const char *[]) {
-                                           "<Ctrl><Shift>s",
-                                           NULL,
-                                         });
+                                         (const char *[]) { "<Ctrl><Shift>s",
+                                         NULL });
 }
 

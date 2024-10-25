@@ -2,6 +2,7 @@
 
 #include "pixelshop-window.h"
 #include "pixelshop-image.h"
+#include "pixelshop-histogram-window.h"
 
 struct _PixelshopWindow
 {
@@ -14,9 +15,12 @@ struct _PixelshopWindow
   GtkStack *stack;
   GtkRevealer *edit_button_revealer;
   GtkToggleButton *edit_button;
+  AdwOverlaySplitView *split_view;
 
-  GtkToggleButton *grayscale_button;
-  GtkSpinButton *quantization_button;
+  AdwActionRow *hmirror_button;
+  AdwActionRow *vmirror_button;
+  AdwSwitchRow *grayscale_button;
+  AdwSpinRow *quantization_button;
 
   GtkBox *pictures_box;
   GtkPicture *original_picture;
@@ -39,7 +43,10 @@ pixelshop_window_class_init (PixelshopWindowClass *klass)
   gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, stack);
   gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, edit_button_revealer);
   gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, edit_button);
+  gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, split_view);
 
+  gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, hmirror_button);
+  gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, vmirror_button);
   gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, grayscale_button);
   gtk_widget_class_bind_template_child (widget_class, PixelshopWindow, quantization_button);
 
@@ -51,13 +58,15 @@ pixelshop_window_class_init (PixelshopWindowClass *klass)
 static void
 draw_original_picture (PixelshopWindow *self)
 {
-  gtk_picture_set_paintable(self->original_picture, GDK_PAINTABLE(pixelshop_image_get_original_texture(self->image)));
+  gtk_picture_set_paintable (self->original_picture,
+                             GDK_PAINTABLE(pixelshop_image_get_original_texture(self->image)));
 }
 
 static void
 draw_edited_picture (PixelshopWindow *self)
 {
-  gtk_picture_set_paintable(self->edited_picture, GDK_PAINTABLE(pixelshop_image_get_edited_texture(self->image)));
+  gtk_picture_set_paintable (self->edited_picture,
+                             GDK_PAINTABLE(pixelshop_image_get_edited_texture(self->image)));
 }
 
 static void
@@ -87,26 +96,55 @@ toggle_grayscale (GAction *action, GVariant *parameter, PixelshopWindow *self)
 static void
 on_colors_changed (GAction *action, GVariant *parameter, PixelshopWindow *self)
 {
-  pixelshop_image_set_quantization_colors (gtk_spin_button_get_value_as_int(self->quantization_button), self->image);
+  int colors = adw_spin_row_get_value(self->quantization_button);
 
-  draw_edited_picture (self);
+  if (colors < 256){
+    pixelshop_image_set_quantization_colors (colors, self->image);
+    draw_edited_picture (self);
+  }
 }
 
 static void
 reset_buttons (PixelshopWindow *self)
 {
-  gtk_toggle_button_set_active(self->grayscale_button, false);
-  gtk_spin_button_set_value(self->quantization_button, 256);
+  gtk_list_box_row_set_selectable((GtkListBoxRow*)self->grayscale_button, false);
+  adw_spin_row_set_value(self->quantization_button, 256);
 }
 
 static void
 stack_transition (PixelshopWindow *self)
 {
-  gtk_stack_set_visible_child(self->stack, GTK_WIDGET (self->pictures_box));
+  gtk_stack_set_visible_child(self->stack, GTK_WIDGET (self->split_view));
   gtk_revealer_set_reveal_child(self->edit_button_revealer, true);
   gtk_toggle_button_set_active(self->edit_button, true);
   adw_toolbar_view_set_top_bar_style(self->toolbar_view, ADW_TOOLBAR_RAISED_BORDER);
   self->image_opened = true;
+}
+
+static void
+on_original_histogram (GAction *action, GVariant *parameter, PixelshopWindow *self)
+{
+	PixelshopHistogramWindow *histogram_window = g_object_new (PIXELSHOP_TYPE_HISTOGRAM_WINDOW, NULL);
+
+  int histogram[COLORS_PER_COMPONENT];
+
+  pixelshop_image_get_original_histogram (self->image, histogram);
+  pixelshop_histogram_window_set_data (histogram_window, histogram);
+
+	gtk_window_present ((GtkWindow*) histogram_window);
+}
+
+static void
+on_edited_histogram (GAction *action, GVariant *parameter, PixelshopWindow *self)
+{
+	PixelshopHistogramWindow *histogram_window = g_object_new (PIXELSHOP_TYPE_HISTOGRAM_WINDOW, NULL);
+
+  int histogram[COLORS_PER_COMPONENT];
+
+  pixelshop_image_get_edited_histogram (self->image, histogram);
+  pixelshop_histogram_window_set_data (histogram_window, histogram);
+
+	gtk_window_present ((GtkWindow*) histogram_window);
 }
 
 static void
@@ -144,7 +182,6 @@ open_file_complete (GObject          *source_object,
     stack_transition(self);
 
   reset_buttons(self);
-  pixelshop_image_reset_edits(self->image);
 
   pixelshop_image_load_image ((guint8*) contents, length, self->image);
 
@@ -327,19 +364,25 @@ pixelshop_window_init (PixelshopWindow *self)
   gtk_widget_add_controller (GTK_WIDGET (self->stack), GTK_EVENT_CONTROLLER (target));
 
   // mirror_horizontally Button:
-  g_autoptr (GSimpleAction) mirror_horizontally_action = g_simple_action_new ("mirror-horizontally", NULL);
-  g_signal_connect (mirror_horizontally_action, "activate", G_CALLBACK (on_mirror_horizontally), self);
-  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (mirror_horizontally_action));
+  g_signal_connect (self->hmirror_button, "clicked", G_CALLBACK (on_mirror_horizontally), self);
 
   // mirror_vertically Button:
-  g_autoptr (GSimpleAction) mirror_vertically_action = g_simple_action_new ("mirror-vertically", NULL);
-  g_signal_connect (mirror_vertically_action, "activate", G_CALLBACK (on_mirror_vertically), self);
-  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (mirror_vertically_action));
+  g_signal_connect (self->vmirror_button, "clicked", G_CALLBACK (on_mirror_vertically), self);
 
   // Grayscale Button:
-  g_signal_connect (self->grayscale_button, "toggled", G_CALLBACK (toggle_grayscale), self);
+  g_signal_connect (self->grayscale_button, "notify::active", G_CALLBACK (toggle_grayscale), self);
 
   // Colors Button:
-  g_signal_connect (self->quantization_button, "value-changed", G_CALLBACK (on_colors_changed), self);
+  g_signal_connect (self->quantization_button, "output", G_CALLBACK (on_colors_changed), self);
+
+  // Original Histogram Button:
+  g_autoptr (GSimpleAction) original_histogram_action = g_simple_action_new ("original-histogram", NULL);
+  g_signal_connect (original_histogram_action, "activate", G_CALLBACK (on_original_histogram), self);
+  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (original_histogram_action));
+
+  // Edited Histogram Button:
+  g_autoptr (GSimpleAction) edited_histogram_action = g_simple_action_new ("edited-histogram", NULL);
+  g_signal_connect (edited_histogram_action, "activate", G_CALLBACK (on_edited_histogram), self);
+  g_action_map_add_action (G_ACTION_MAP (self), G_ACTION (edited_histogram_action));
 }
 

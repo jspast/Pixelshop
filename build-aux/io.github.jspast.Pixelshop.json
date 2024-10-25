@@ -1,11 +1,10 @@
 {
     "id" : "io.github.jspast.Pixelshop",
     "runtime" : "org.gnome.Platform",
-    "runtime-version" : "47",
+    "runtime-version" : "46",
     "sdk" : "org.gnome.Sdk",
     "command" : "pixelshop",
     "finish-args" : [
-        "--share=network",
         "--share=ipc",
         "--socket=fallback-x11",
         "--device=dri",

@@ -3,56 +3,53 @@ using Adw 1;
 
 template $PixelshopWindow: Adw.ApplicationWindow {
   title: _('Pixelshop');
-  default-width: 800;
-  default-height: 600;
+  default-width: 808;
+  default-height: 808;
+  width-request: 300;
+  height-request: 200;
 
   Adw.Breakpoint {
-    condition ("max-width: 600sp")
+    condition ("max-width: 800sp")
 
     setters {
-     hmirror_button_label.visible: false;
-     vmirror_button_label.visible: false;
-     grayscale_button_label.visible: false;
-     quantization_box_label.visible: false;
-     pictures_box.orientation: vertical;
+      split_view.collapsed: true;
+    }
+  }
+
+  Adw.Breakpoint {
+    condition ("max-width: 400sp")
+
+    setters {
+      split_view.collapsed: true;
+      header_bar.show-title: false;
     }
   }
 
   content: Adw.ToolbarView toolbar_view {
-    reveal-bottom-bars: bind edit_button.active;
     top-bar-style: flat;
-    bottom-bar-style: raised_border;
 
     [top]
-    Adw.HeaderBar {
+    Adw.HeaderBar header_bar {
 
+      [start]
       Revealer edit_button_revealer {
         reveal-child: false;
 
-        [start]
         Box {
           hexpand: true;
           spacing: 12;
 
           ToggleButton edit_button {
-            tooltip-text: bind edit_button_label.label;
-            active: false;
+            tooltip-text: _('Edit');
+            active: bind split_view.show-sidebar;
+            icon-name: "pixelshop-edit-symbolic";
             hexpand: true;
+          }
 
-            Box {
-              halign: center;
-              hexpand: true;
-              spacing: 12;
-
-              Image {
-                icon-name: "pixelshop-edit-symbolic";
-              }
-
-              Label edit_button_label {
-                label: _('Edit');
-                ellipsize: end;
-              }
-            }
+          Button original_histogram_button {
+            tooltip-text: _('Original Histogram');
+            icon-name: "pixelshop-histogram-symbolic";
+            action-name: "win.original-histogram";
           }
         }
       }
@@ -63,6 +60,18 @@ template $PixelshopWindow: Adw.ApplicationWindow {
         icon-name: 'open-menu-symbolic-symbolic';
         tooltip-text: _('Main Menu');
         menu-model: primary_menu;
+      }
+
+      [end]
+      Revealer {
+        reveal-child: bind edit_button_revealer.reveal-child;
+
+        [end]
+        Button edited_histogram_button {
+          tooltip-text: _('Edited Histogram');
+          icon-name: "pixelshop-histogram-symbolic";
+          action-name: "win.edited-histogram";
+        }
       }
     }
 
@@ -81,125 +90,346 @@ template $PixelshopWindow: Adw.ApplicationWindow {
         }
       }
 
-      Box pictures_box {
-        orientation: horizontal;
-        hexpand: true;
-        vexpand: true;
-        css-classes: ["image-background"];
+      Adw.OverlaySplitView split_view {
+        show-sidebar: bind edit_button.active;
+        min-sidebar-width: 300;
+        collapsed: false;
 
-        Picture original_picture {
-          hexpand: true;
-          vexpand: true;
-        }
-
-        Separator {
-          orientation: vertical;
-          width-request: 2;
-        }
-
-        Picture edited_picture {
-          hexpand: true;
-          vexpand: true;
-        }
-      }
-    }
-
-    [bottom]
-    ActionBar {
-
-      Box {
-        hexpand: true;
-        spacing: 12;
-
-        Button hmirror_button {
-          tooltip-text: bind hmirror_button_label.label;
-          action-name: "win.mirror-horizontally";
-          hexpand: true;
+        sidebar: ScrolledWindow {
 
           Box {
-            halign: center;
+            orientation: vertical;
+            spacing: 6;
+            margin-start: 6;
+            margin-end: 6;
+            margin-top: 6;
+            margin-bottom: 6;
+
+            ListBox {
+              hexpand: true;
+              // css-classes: ["boxed-list-separate"];
+              css-classes: ["boxed-list"];
+              selection-mode: none;
+
+              Adw.ActionRow mirror_row {
+                icon-name: "pixelshop-mirror-symbolic";
+                title: _('Mirror');
+
+                [suffix]
+                Button hmirror_button {
+                  icon-name: "pixelshop-mirror-horizontal-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                  margin-end: 4;
+                  tooltip-text: _('Mirror Horizontally');
+                }
+
+                Button vmirror_button {
+                  icon-name: "pixelshop-mirror-vertical-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                  tooltip-text: _('Mirror Vertically');
+                }
+              }
+
+              Adw.SwitchRow grayscale_button {
+                title: _('Grayscale');
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-grayscale-symbolic";
+                }
+              }
+
+              Adw.SpinRow quantization_button {
+                hexpand: true;
+                sensitive: bind grayscale_button.active;
+                title: _('Colors');
+                numeric: true;
+                adjustment: Adjustment {
+                  lower: 1;
+                  upper: 256;
+                  step-increment: 1;
+                  value: 256;
+                };
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-color-symbolic";
+                }
+              }
+
+              Adw.SpinRow brightness_button {
+                hexpand: true;
+                title: _('Brightness');
+                numeric: true;
+                adjustment: Adjustment {
+                  lower: -255;
+                  upper: 255;
+                  step-increment: 1;
+                  value: 0;
+                };
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-brightness-symbolic";
+                }
+              }
+
+              Adw.SpinRow contrast_button {
+                hexpand: true;
+                title: _('Contrast');
+                numeric: true;
+                adjustment: Adjustment {
+                  lower: 0;
+                  upper: 255;
+                  step-increment: 1;
+                  value: 1;
+                };
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-contrast-symbolic";
+                }
+              }
+
+              Adw.ActionRow negative_row {
+                icon-name: "pixelshop-negative-symbolic";
+                title: _('Negative');
+
+                [suffix]
+                Button negative_button {
+                  icon-name: "pixelshop-apply-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                }
+              }
+
+              Adw.SwitchRow equalize_button {
+                title: _('Equalize');
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-equalize-symbolic";
+                }
+              }
+
+              Adw.SwitchRow match_row {
+                title: _('Match histogram');
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-match-symbolic";
+                }
+
+                [suffix]
+                Button match_button {
+                  icon-name: "pixelshop-insert-image-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                  tooltip-text: _('Insert image to match');
+                }
+              }
+
+              Adw.ExpanderRow zoom_row {
+                title: _('Zoom');
+
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-zoom-symbolic";
+                }
+
+                [suffix]
+                Button zoom_out_button {
+                  icon-name: "pixelshop-zoom-out-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                  margin-end: 4;
+                  tooltip-text: _('Zoom out');
+                }
+
+                [suffix]
+                Button zoom_in_button {
+                  icon-name: "pixelshop-zoom-in-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                  tooltip-text: _('Zoom in');
+                }
+
+                Adw.SpinRow zoom_out_x_factor {
+                  hexpand: true;
+                  title: _('Zoom out X factor');
+                  numeric: true;
+                  adjustment: Adjustment {
+                    lower: 0;
+                    upper: 255;
+                    step-increment: 1;
+                    value: 1;
+                  };
+                }
+
+                Adw.SpinRow zoom_out_y_factor {
+                  hexpand: true;
+                  title: _('Zoom out Y factor');
+                  numeric: true;
+                  adjustment: Adjustment {
+                    lower: 0;
+                    upper: 255;
+                    step-increment: 1;
+                    value: 1;
+                  };
+                }
+              }
+
+              Adw.ActionRow rotate_button {
+                icon-name: "pixelshop-rotate-symbolic";
+                title: _('Rotate 90º');
+
+                [suffix]
+                Button rotate_left_button {
+                  tooltip-text: _('Rotate Left');
+                  icon-name: "pixelshop-rotate-left-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                  margin-end: 4;
+                }
+
+                Button rotate_right_button {
+                  tooltip-text: _('Rotate Right');
+                  icon-name: "pixelshop-rotate-right-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                }
+              }
+
+              Adw.ComboRow filter_row {
+                icon-name: "pixelshop-filter-symbolic";
+                title: _('Filter');
+
+                model: StringList {
+                  strings: ["Gaussian", "Laplacian", "Generic High Pass", "Prewitt Hx", "Prewitt Hy", "Sobel Hx", "Sobel Hy", "Custom"];
+                };
+
+                [suffix]
+                Button filter_button {
+                  icon-name: "pixelshop-apply-symbolic";
+                  css-classes: ["circular"];
+                  valign: center;
+                }
+              }
+            }
+
+            Label filter_label {
+              label: _('Filter');
+            }
+
+            Grid filter_grid {
+              row-homogeneous: true;
+              column-homogeneous: true;
+              row-spacing: 6;
+              column-spacing: 6;
+
+              Entry filter_entry0 {
+                layout {
+                  column: 0;
+                  row: 0;
+                }
+              }
+
+              Entry filter_entry1 {
+                layout {
+                  column: 1;
+                  row: 0;
+                }
+              }
+
+              Entry filter_entry2 {
+                layout {
+                  column: 2;
+                  row: 0;
+                }
+              }
+
+              Entry filter_entry3 {
+                layout {
+                  column: 0;
+                  row: 1;
+                }
+              }
+
+              Entry filter_entry4 {
+                layout {
+                  column: 1;
+                  row: 1;
+                }
+              }
+
+              Entry filter_entry5 {
+                layout {
+                  column: 2;
+                  row: 1;
+                }
+              }
+
+              Entry filter_entry6 {
+                layout {
+                  column: 0;
+                  row: 2;
+                }
+              }
+
+              Entry filter_entry7 {
+                layout {
+                  column: 1;
+                  row: 2;
+                }
+              }
+
+              Entry filter_entry8 {
+                layout {
+                  column: 2;
+                  row: 2;
+                }
+              }
+            }
+          }
+        };
+
+        content: Adw.BreakpointBin {
+          width-request: 300;
+          height-request: 100;
+
+
+          Adw.Breakpoint {
+            condition ("max-aspect-ratio: 4/3")
+
+            setters {
+              pictures_box.orientation: vertical;
+            }
+          }
+
+          Box pictures_box {
+            orientation: horizontal;
             hexpand: true;
-            spacing: 12;
+            vexpand: true;
+            css-classes: ["image-background"];
 
-            Image {
-              icon-name: "pixelshop-mirror-horizontal-symbolic";
+            Picture original_picture {
+              hexpand: true;
+              vexpand: true;
             }
 
-            Label hmirror_button_label {
-              label: _('Mirror Horizontally');
-              ellipsize: end;
-            }
-          }
-        }
-
-        Button vmirror_button {
-          tooltip-text: bind vmirror_button_label.label;
-          action-name: "win.mirror-vertically";
-          hexpand: true;
-
-          Box {
-            halign: center;
-            hexpand: true;
-            spacing: 12;
-
-            Image {
-              icon-name: "pixelshop-mirror-vertical-symbolic";
+            Separator {
+              orientation: vertical;
+              width-request: 2;
             }
 
-            Label vmirror_button_label {
-              label: _('Mirror Vertically');
-              ellipsize: end;
+            Picture edited_picture {
+              hexpand: true;
+              vexpand: true;
             }
           }
-        }
-
-        ToggleButton grayscale_button {
-          tooltip-text: bind grayscale_button_label.label;
-          active: false;
-          hexpand: true;
-
-          Box {
-            halign: center;
-            hexpand: true;
-            spacing: 12;
-
-            Image {
-              icon-name: "pixelshop-grayscale-symbolic";
-            }
-
-            Label grayscale_button_label {
-              label: _('Grayscale');
-              ellipsize: end;
-            }
-          }
-        }
-
-        Box quantization_box {
-          tooltip-text: bind quantization_box_label.label;
-          halign: center;
-          hexpand: true;
-          spacing: 12;
-          sensitive: bind grayscale_button.active;
-
-          Image {
-            icon-name: "pixelshop-color-symbolic";
-          }
-
-          Label quantization_box_label {
-            label: _('Colors');
-            ellipsize: end;
-          }
-
-          SpinButton quantization_button {
-            numeric: true;
-            adjustment: Adjustment {
-              lower: 1;
-              upper: 256;
-              step-increment: 1;
-              value: 256;
-            };
-          }
-        }
+        };
       }
     }
   };

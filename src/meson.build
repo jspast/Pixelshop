@@ -2,6 +2,7 @@ blueprints = custom_target('blueprints',
   input: files(
     'gtk/help-overlay.blp',
     'pixelshop-window.blp',
+    'pixelshop-histogram-window.blp',
   ),
   output: '.',
   command: [find_program('blueprint-compiler'), 'batch-compile', '@OUTPUT@', '@CURRENT_SOURCE_DIR@', '@INPUT@'],
@@ -12,6 +13,8 @@ pixelshop_sources = [
   'pixelshop-application.c',
   'pixelshop-window.c',
   'pixelshop-image.c',
+  'pixelshop-histogram-window.c',
+  'include/gtkchart.c',
 ]
 
 pixelshop_deps = [
