@@ -4,8 +4,8 @@ using Adw 1;
 template $PixelshopWindow: Adw.ApplicationWindow {
   title: _('Pixelshop');
   default-width: 808;
-  default-height: 808;
-  width-request: 300;
+  default-height: 600;
+  width-request: 370;
   height-request: 200;
 
   Adw.Breakpoint {
@@ -17,11 +17,22 @@ template $PixelshopWindow: Adw.ApplicationWindow {
   }
 
   Adw.Breakpoint {
-    condition ("max-width: 400sp")
+    condition ("max-width: 600sp")
 
     setters {
       split_view.collapsed: true;
       header_bar.show-title: false;
+    }
+  }
+
+  Adw.Breakpoint {
+    condition ("max-width: 500sp")
+
+    setters {
+      split_view.collapsed: true;
+      header_bar.show-title: false;
+      apply_button_content.label: "";
+      reset_button_content.label: "";
     }
   }
 
@@ -37,12 +48,12 @@ template $PixelshopWindow: Adw.ApplicationWindow {
 
         Box {
           hexpand: true;
-          spacing: 12;
+          spacing: 6;
 
-          ToggleButton edit_button {
-            tooltip-text: _('Edit');
+          ToggleButton sidebar_button {
+            tooltip-text: _('Operations');
             active: bind split_view.show-sidebar;
-            icon-name: "pixelshop-edit-symbolic";
+            icon-name: "pixelshop-sidebar-symbolic";
             hexpand: true;
           }
 
@@ -50,6 +61,28 @@ template $PixelshopWindow: Adw.ApplicationWindow {
             tooltip-text: _('Original Histogram');
             icon-name: "pixelshop-histogram-symbolic";
             action-name: "win.original-histogram";
+          }
+
+          Button apply_button {
+            action-name: "win.apply";
+            css-classes: ["suggested-action"];
+
+            Adw.ButtonContent apply_button_content {
+              label: _('Apply');
+              icon-name: "pixelshop-apply-symbolic";
+              can-shrink: true;
+            }
+          }
+
+          Button reset_button {
+            action-name: "win.reset";
+            css-classes: ["destructive-action"];
+
+            Adw.ButtonContent reset_button_content {
+              label: _('Reset');
+              icon-name: "pixelshop-reset-symbolic";
+              can-shrink: true;
+            }
           }
         }
       }
@@ -91,7 +124,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
       }
 
       Adw.OverlaySplitView split_view {
-        show-sidebar: bind edit_button.active;
+        show-sidebar: bind sidebar_button.active;
         min-sidebar-width: 300;
         collapsed: false;
 
@@ -116,7 +149,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 title: _('Mirror');
 
                 [suffix]
-                Button hmirror_button {
+                ToggleButton hmirror_button {
                   icon-name: "pixelshop-mirror-horizontal-symbolic";
                   css-classes: ["circular"];
                   valign: center;
@@ -124,7 +157,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                   tooltip-text: _('Mirror Horizontally');
                 }
 
-                Button vmirror_button {
+                ToggleButton vmirror_button {
                   icon-name: "pixelshop-mirror-vertical-symbolic";
                   css-classes: ["circular"];
                   valign: center;
@@ -132,30 +165,36 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 }
               }
 
-              Adw.SwitchRow grayscale_button {
+              Adw.ExpanderRow {
                 title: _('Grayscale');
+                expanded: bind grayscale_button.active;
 
                 [prefix]
                 Image {
                   icon-name: "pixelshop-grayscale-symbolic";
                 }
-              }
 
-              Adw.SpinRow quantization_button {
-                hexpand: true;
-                sensitive: bind grayscale_button.active;
-                title: _('Colors');
-                numeric: true;
-                adjustment: Adjustment {
-                  lower: 1;
-                  upper: 256;
-                  step-increment: 1;
-                  value: 256;
-                };
+                [suffix]
+                Switch grayscale_button {
+                  valign: center;
+                }
 
-                [prefix]
-                Image {
-                  icon-name: "pixelshop-color-symbolic";
+                Adw.SpinRow quantization_button {
+                  hexpand: true;
+                  sensitive: bind grayscale_button.active;
+                  title: _('Colors');
+                  numeric: true;
+                  adjustment: Adjustment {
+                    lower: 1;
+                    upper: 256;
+                    step-increment: 1;
+                    value: 256;
+                  };
+
+                  [prefix]
+                  Image {
+                    icon-name: "pixelshop-color-symbolic";
+                  }
                 }
               }
 
@@ -180,10 +219,11 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 hexpand: true;
                 title: _('Contrast');
                 numeric: true;
+                digits: 2;
                 adjustment: Adjustment {
-                  lower: 0;
+                  lower: 0.01;
                   upper: 255;
-                  step-increment: 1;
+                  step-increment: 0.1;
                   value: 1;
                 };
 
@@ -193,20 +233,17 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 }
               }
 
-              Adw.ActionRow negative_row {
-                icon-name: "pixelshop-negative-symbolic";
+              Adw.SwitchRow negative_button {
                 title: _('Negative');
 
-                [suffix]
-                Button negative_button {
-                  icon-name: "pixelshop-apply-symbolic";
-                  css-classes: ["circular"];
-                  valign: center;
+                [prefix]
+                Image {
+                  icon-name: "pixelshop-negative-symbolic";
                 }
               }
 
               Adw.SwitchRow equalize_button {
-                title: _('Equalize');
+                title: _('Equalize histogram');
 
                 [prefix]
                 Image {
@@ -214,7 +251,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 }
               }
 
-              Adw.SwitchRow match_row {
+              Adw.ActionRow {
                 title: _('Match histogram');
 
                 [prefix]
@@ -228,6 +265,13 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                   css-classes: ["circular"];
                   valign: center;
                   tooltip-text: _('Insert image to match');
+                  action-name: "win.open-target";
+                }
+
+                [suffix]
+                Switch match_row {
+                  valign: center;
+                  sensitive: false;
                 }
               }
 
@@ -240,7 +284,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 }
 
                 [suffix]
-                Button zoom_out_button {
+                ToggleButton zoom_out_button {
                   icon-name: "pixelshop-zoom-out-symbolic";
                   css-classes: ["circular"];
                   valign: center;
@@ -249,7 +293,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 }
 
                 [suffix]
-                Button zoom_in_button {
+                ToggleButton zoom_in_button {
                   icon-name: "pixelshop-zoom-in-symbolic";
                   css-classes: ["circular"];
                   valign: center;
@@ -261,10 +305,10 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                   title: _('Zoom out X factor');
                   numeric: true;
                   adjustment: Adjustment {
-                    lower: 0;
-                    upper: 255;
+                    lower: 1;
+                    upper: 10000;
                     step-increment: 1;
-                    value: 1;
+                    value: 2;
                   };
                 }
 
@@ -273,10 +317,10 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                   title: _('Zoom out Y factor');
                   numeric: true;
                   adjustment: Adjustment {
-                    lower: 0;
-                    upper: 255;
+                    lower: 1;
+                    upper: 10000;
                     step-increment: 1;
-                    value: 1;
+                    value: 2;
                   };
                 }
               }
@@ -286,7 +330,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 title: _('Rotate 90º');
 
                 [suffix]
-                Button rotate_left_button {
+                ToggleButton rotate_left_button {
                   tooltip-text: _('Rotate Left');
                   icon-name: "pixelshop-rotate-left-symbolic";
                   css-classes: ["circular"];
@@ -294,7 +338,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                   margin-end: 4;
                 }
 
-                Button rotate_right_button {
+                ToggleButton rotate_right_button {
                   tooltip-text: _('Rotate Right');
                   icon-name: "pixelshop-rotate-right-symbolic";
                   css-classes: ["circular"];
@@ -302,93 +346,137 @@ template $PixelshopWindow: Adw.ApplicationWindow {
                 }
               }
 
-              Adw.ComboRow filter_row {
+              Adw.ExpanderRow filter_row {
                 icon-name: "pixelshop-filter-symbolic";
                 title: _('Filter');
 
-                model: StringList {
-                  strings: ["Gaussian", "Laplacian", "Generic High Pass", "Prewitt Hx", "Prewitt Hy", "Sobel Hx", "Sobel Hy", "Custom"];
-                };
-
                 [suffix]
-                Button filter_button {
-                  icon-name: "pixelshop-apply-symbolic";
-                  css-classes: ["circular"];
+                Switch filter_switch {
                   valign: center;
                 }
-              }
-            }
 
-            Label filter_label {
-              label: _('Filter');
-            }
-
-            Grid filter_grid {
-              row-homogeneous: true;
-              column-homogeneous: true;
-              row-spacing: 6;
-              column-spacing: 6;
-
-              Entry filter_entry0 {
-                layout {
-                  column: 0;
-                  row: 0;
+                [suffix]
+                DropDown filter_drop_down {
+                  valign: center;
+                  model: StringList {
+                  strings: ["Gaussian", "Laplacian", "High Pass",
+                            "Prewitt Hx", "Prewitt Hy", "Sobel Hx",
+                            "Sobel Hy", "Custom"];
+                  };
                 }
-              }
 
-              Entry filter_entry1 {
-                layout {
-                  column: 1;
-                  row: 0;
+                Grid filter_grid {
+                  row-homogeneous: true;
+                  column-homogeneous: true;
+                  row-spacing: 6;
+                  column-spacing: 6;
+                  sensitive: false;
+
+                  Entry filter_entry0 {
+                    buffer: EntryBuffer filter_buffer0 {
+                      text: "0.0625";
+                    };
+                    layout {
+                      column: 0;
+                      row: 0;
+                    }
+                  }
+
+                  Entry filter_entry1 {
+                    buffer: EntryBuffer filter_buffer1 {
+                      text: "0.125";
+                    };
+                    layout {
+                      column: 1;
+                      row: 0;
+                    }
+                  }
+
+                  Entry filter_entry2 {
+                    buffer: EntryBuffer filter_buffer2 {
+                      text: "0.0625";
+                    };
+                    layout {
+                      column: 2;
+                      row: 0;
+                    }
+                  }
+
+                  Entry filter_entry3 {
+                    buffer: EntryBuffer filter_buffer3 {
+                      text: "0.125";
+                    };
+                    layout {
+                      column: 0;
+                      row: 1;
+                    }
+                  }
+
+                  Entry filter_entry4 {
+                    buffer: EntryBuffer filter_buffer4 {
+                      text: "0.25";
+                    };
+                    layout {
+                      column: 1;
+                      row: 1;
+                    }
+                  }
+
+                  Entry filter_entry5 {
+                    buffer: EntryBuffer filter_buffer5 {
+                      text: "0.125";
+                    };
+                    layout {
+                      column: 2;
+                      row: 1;
+                    }
+                  }
+
+                  Entry filter_entry6 {
+                    buffer: EntryBuffer filter_buffer6 {
+                      text: "0.0625";
+                    };
+                    layout {
+                      column: 0;
+                      row: 2;
+                    }
+                  }
+
+                  Entry filter_entry7 {
+                    buffer: EntryBuffer filter_buffer7 {
+                      text: "0.125";
+                    };
+                    layout {
+                      column: 1;
+                      row: 2;
+                    }
+                  }
+
+                  Entry filter_entry8 {
+                    buffer: EntryBuffer filter_buffer8 {
+                      text: "0.0625";
+                    };
+                    layout {
+                      column: 2;
+                      row: 2;
+                    }
+                  }
                 }
-              }
 
-              Entry filter_entry2 {
-                layout {
-                  column: 2;
-                  row: 0;
+                Adw.SpinRow filter_add_button {
+                  hexpand: true;
+                  title: _('Add to result');
+                  numeric: true;
+                  adjustment: Adjustment {
+                    lower: -255;
+                    upper: 255;
+                    step-increment: 1;
+                    value: 0;
+                  };
                 }
-              }
 
-              Entry filter_entry3 {
-                layout {
-                  column: 0;
-                  row: 1;
-                }
-              }
-
-              Entry filter_entry4 {
-                layout {
-                  column: 1;
-                  row: 1;
-                }
-              }
-
-              Entry filter_entry5 {
-                layout {
-                  column: 2;
-                  row: 1;
-                }
-              }
-
-              Entry filter_entry6 {
-                layout {
-                  column: 0;
-                  row: 2;
-                }
-              }
-
-              Entry filter_entry7 {
-                layout {
-                  column: 1;
-                  row: 2;
-                }
-              }
-
-              Entry filter_entry8 {
-                layout {
-                  column: 2;
-                  row: 2;
+                Adw.SwitchRow filter_colored_button {
+                  title: _('Apply colored');
                 }
               }
             }
@@ -417,6 +505,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
             Picture original_picture {
               hexpand: true;
               vexpand: true;
+              content-fit: scale_down;
             }
 
             Separator {
@@ -427,6 +516,7 @@ template $PixelshopWindow: Adw.ApplicationWindow {
             Picture edited_picture {
               hexpand: true;
               vexpand: true;
+              content-fit: scale_down;
             }
           }
         };

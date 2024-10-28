@@ -7,7 +7,9 @@
     <file>main.css</file>
   </gresource>
   <gresource prefix="/io/github/jspast/Pixelshop/icons/scalable/actions">
-    <file alias="pixelshop-edit-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/magic-wand-symbolic.svg</file>
+    <file alias="pixelshop-sidebar-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/dock-left-symbolic.svg</file>
+    <file alias="pixelshop-apply-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/magic-wand-symbolic.svg</file>
+    <file alias="pixelshop-reset-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/brush-symbolic.svg</file>
     <file alias="pixelshop-grayscale-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/blend-tool-symbolic.svg</file>
     <file alias="pixelshop-mirror-horizontal-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/arrow-pointing-at-line-right-symbolic.svg</file>
     <file alias="pixelshop-mirror-vertical-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/arrow-pointing-at-line-up-symbolic.svg</file>
@@ -22,7 +24,7 @@
     <file alias="pixelshop-rotate-left-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/rotate-left-symbolic.svg</file>
     <file alias="pixelshop-rotate-right-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/rotate-right-symbolic.svg</file>
     <file alias="pixelshop-mirror-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/view-mirror-symbolic.svg</file>
-    <file alias="pixelshop-apply-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/checkmark-small-symbolic.svg</file>
+    <file alias="pixelshop-check-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/checkmark-small-symbolic.svg</file>
     <file alias="pixelshop-insert-image-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/insert-image-symbolic.svg</file>
     <file alias="pixelshop-match-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/function-third-order-symbolic.svg</file>
     <file alias="pixelshop-zoom-symbolic.svg" preprocess="xml-stripblanks">../data/icons/hicolor/symbolic/apps/loupe-symbolic.svg</file>
