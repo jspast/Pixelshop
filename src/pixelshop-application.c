@@ -67,7 +67,7 @@ pixelshop_application_about_action (GSimpleAction *action,
 	                       "application-name", "Pixelshop",
 	                       "application-icon", "io.github.jspast.Pixelshop",
 	                       "developer-name", "João S. Pastorello",
-	                       "version", "0.1.0",
+	                       "version", "0.2.0",
                          "issue-url", "https://github.com/jspast/Pixelshop/issues",
                          "website", "https://github.com/jspast/Pixelshop",
 	                       NULL);
