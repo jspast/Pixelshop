@@ -626,7 +626,7 @@ pixelshop_image_apply_filter_colored (PixelshopImage *self, float *filter,
         res = fminf (res, 255);
         res = fmaxf (res, 0);
 
-        memset (dest, res, 1);
+        memset (dest, (guint8) roundf (res), 1);
       }
     }
   }
@@ -648,8 +648,8 @@ pixelshop_image_apply_filter_grayscale (PixelshopImage *self, float *filter,
   for (int y = 1; y < self->edited_height - 1; y++) {
     for (int x = 1; x < self->edited_width - 1; x++) {
       guint8 *dest = &new_image[y * self->edited_stride + x * COMPONENTS];
-      float res;
 
+      float res;
       res = filter[8] * self->edited_image[(y - 1) * self->edited_stride + (x - 1) * COMPONENTS];
       res += filter[7] * self->edited_image[(y - 1) * self->edited_stride + x * COMPONENTS];
       res += filter[6] * self->edited_image[(y - 1) * self->edited_stride + (x + 1) * COMPONENTS];
@@ -663,7 +663,7 @@ pixelshop_image_apply_filter_grayscale (PixelshopImage *self, float *filter,
       res = fminf (res, 255);
       res = fmaxf (res, 0);
 
-      memset (dest, res, COMPONENTS);
+      memset (dest, (guint8) roundf (res), COMPONENTS);
     }
   }
 

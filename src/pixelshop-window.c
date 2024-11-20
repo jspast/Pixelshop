@@ -4,6 +4,8 @@
 #include "pixelshop-image.h"
 #include "pixelshop-histogram-window.h"
 
+#include <locale.h>
+
 struct _PixelshopWindow
 {
   AdwApplicationWindow parent_instance;
@@ -455,6 +457,8 @@ pixelshop_window_open_target_file_dialog (GAction *action, GVariant *parameter,
 static void
 get_filter (PixelshopWindow *self, float *filter)
 {
+  setlocale(LC_NUMERIC, "C");
+
   filter[0] = atof (gtk_entry_buffer_get_text (self->filter_buffer0));
   filter[1] = atof (gtk_entry_buffer_get_text (self->filter_buffer1));
   filter[2] = atof (gtk_entry_buffer_get_text (self->filter_buffer2));
