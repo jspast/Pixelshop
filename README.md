@@ -1,8 +1,14 @@
-# Pixelshop
+<div align="center">
+  <img src="/data/icons/hicolor/scalable/apps/io.github.jspast.Pixelshop.svg" width=128>
 
-A simple GTK 4 + Libadwaita image editor
+  # Pixelshop
 
-![Pixelshop Screenshot](./data/screenshots/main-window.png)
+  A simple GTK 4 + Libadwaita image editor
+
+  ![Pixelshop Screenshot](./data/screenshots/main-window.png)
+  ![Histogram Window](./data/screenshots/histogram-window.png)
+
+</div>
 
 ## Features
 
@@ -20,9 +26,7 @@ A simple GTK 4 + Libadwaita image editor
 - Histogram visualization
 - Adaptive UI
 
-![Histogram Window](./data/screenshots/histogram-window.png)
 ![Operations](./data/screenshots/operations.png)
-![Convolution Filters](./data/screenshots/convolution-filters.png)
 
 ## Libraries used
 
